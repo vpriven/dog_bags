@@ -422,6 +422,7 @@ section { padding: 100px 0; }
   transition: opacity 0.45s ease, transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
   animation: prodBob 4s ease-in-out infinite;
 }
+.product-stage img.prod { object-fit: contain; }
 .product-stage .roll { opacity: 1; transform: translateY(0) rotate(0); }
 .product-stage .bag  { opacity: 0; transform: translateY(12px) scale(0.88) rotate(-5deg); }
 .product-card:hover .roll, .product-card:focus-within .roll {
@@ -823,8 +824,10 @@ section { padding: 100px 0; }
 // ===== PRODUCT CONFIG =====
 const PRODUCTS = [
   { name: "Lavender",       type: "scent", stripeColors: ["#B49BDD", "#8FA86B"], description: "Calm, soft, soothing." },
-  { name: "Lemon",          type: "scent", stripeColors: ["#4A90D9", "#F7C856"], description: "Bright and fresh — kept light." },
-  { name: "Fragrance-Free", type: "scent", stripeColors: ["#B8B3AA", "#F0EBE4"], description: "For sensitive pups — no added scent." },
+  { name: "Lemon",          type: "scent", stripeColors: ["#4A90D9", "#F7C856"], description: "Bright and fresh — kept light.",
+    img: { roll: "images/lemon-roll.png", bag: "images/lemon-bag.png" } },
+  { name: "Fragrance-Free", type: "scent", stripeColors: ["#B8B3AA", "#F0EBE4"], description: "For sensitive pups — no added scent.",
+    img: { roll: "images/fragrance-free-roll.png", bag: "images/fragrance-free-bag.png" } },
   { name: "Doodie Calls",       type: "print", stripeColors: ["#E8734A", "#FFF0E0"], printedText: "Doodie Calls",       description: "When duty calls, you answer." },
   { name: "Pick of the Litter", type: "print", stripeColors: ["#4BBFAD", "#E8DCC8"], printedText: "Pick of the Litter", description: "The bag your walk deserves." },
   { name: "Business Time",      type: "print", stripeColors: ["#2C3E6B", "#D4A843"], printedText: "Business Time",      description: "Strictly professional." },
@@ -929,6 +932,20 @@ function bagSVG(idx, c1, c2) {
   </svg>`;
 }
 
+// Returns an <img> (real photo) when the product defines one, else the CSS/SVG art.
+// The <img> carries the matching SVG as a fallback, so a missing/not-yet-uploaded
+// file degrades gracefully to the illustration instead of a broken image.
+function prodVisual(i, p, type) {
+  const svg = type === "roll"
+    ? rollSVG(i, p.stripeColors[0], p.stripeColors[1])
+    : bagSVG(i, p.stripeColors[0], p.stripeColors[1]);
+  if (p.img && p.img[type]) {
+    return `<img class="prod ${type}" src="${p.img[type]}" alt="Pupkeep ${p.name} ${type}"
+              data-svgfallback="${encodeURIComponent(svg)}">`;
+  }
+  return svg;
+}
+
 function renderCards() {
   PRODUCTS.forEach((p, i) => {
     const card = document.createElement("div");
@@ -942,8 +959,8 @@ function renderCards() {
 
     card.innerHTML = `
       <div class="product-stage">
-        ${rollSVG(i, p.stripeColors[0], p.stripeColors[1])}
-        ${bagSVG(i, p.stripeColors[0], p.stripeColors[1])}
+        ${prodVisual(i, p, "roll")}
+        ${prodVisual(i, p, "bag")}
         <span class="stage-hint">Hover for the bag</span>
       </div>
       <div class="select-indicator">
@@ -959,6 +976,14 @@ function renderCards() {
     card.addEventListener("click", () => toggleProduct(p.name, card));
     card.addEventListener("keydown", e => {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleProduct(p.name, card); }
+    });
+
+    // If a real photo fails to load (e.g. not uploaded yet), fall back to the SVG art.
+    card.querySelectorAll("img.prod").forEach(img => {
+      img.addEventListener("error", () => {
+        img.insertAdjacentHTML("afterend", decodeURIComponent(img.dataset.svgfallback));
+        img.remove();
+      });
     });
 
     document.getElementById(p.type === "scent" ? "scentsGrid" : "printsGrid").appendChild(card);
