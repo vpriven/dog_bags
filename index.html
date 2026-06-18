@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pupkeep — Make the dirty work delightful.</title>
+<meta name="description" content="Pupkeep: thicker, better-smelling, easier-to-use dog poop bags — with handles. Join the waitlist.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Bold, saturated, color-blocked palette */
+  --bg: #FFF8E7;
+  --text: #1A1530;
+  --text-light: #5A5470;
+  --accent: #FF4D6D;          /* hot coral-pink */
+  --accent-hover: #E63957;
+  --accent-glow: rgba(255,77,109,0.4);
+  --electric: #2D5BFF;        /* electric blue */
+  --sunshine: #FFD028;        /* vivid yellow */
+  --mint: #00C9A7;            /* bright teal */
+  --grape: #7B3FE4;           /* punchy purple */
+  --card-bg: #FFFFFF;
+  --card-border: #1A1530;     /* bold dark outlines */
+  --success-bg: #D4FFF4;
+  --success-text: #008066;
+  --radius: 24px;
+  --radius-sm: 14px;
+  --shadow: 6px 6px 0 #1A1530;
+  --shadow-lg: 10px 10px 0 #1A1530;
+  --font-heading: 'DM Sans', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+h1,h2,h3,h4,h5 { font-family: var(--font-heading); font-weight: 700; line-height: 1.15; }
+a { color: var(--accent); text-decoration: none; }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 2px;
+}
+.container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.15s !important;
+  }
+  html { scroll-behavior: auto; }
+  .floating-bag, .hero-glow, .marquee-track { animation: none !important; }
+  .floating-bag { display: none; }
+}
+
+/* ===== ANIMATED STRIPE DIVIDER ===== */
+.stripe-divider {
+  height: 8px;
+  background: repeating-linear-gradient(90deg,
+    var(--accent) 0 24px, #F7C856 24px 48px, #7CBFA4 48px 72px,
+    #9B8FD4 72px 96px, #4A90D9 96px 120px, #E8734A 120px 144px);
+  background-size: 288px 100%;
+  animation: stripeScroll 8s linear infinite;
+}
+@keyframes stripeScroll { to { background-position: 288px 0; } }
+
+/* ===== HERO ===== */
+.hero {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 100px 24px 80px;
+  overflow: hidden;
+}
+
+.hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(circle at 15% 20%, var(--sunshine) 0 8px, transparent 9px) 0 0/60px 60px,
+    radial-gradient(ellipse 90% 70% at 50% 35%, rgba(45,91,255,0.25) 0%, transparent 70%),
+    linear-gradient(160deg, #2D5BFF 0%, #4A6BFF 55%, #7B3FE4 100%);
+}
+
+.hero-glow {
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.3;
+  z-index: 0;
+  animation: glowPulse 6s ease-in-out infinite alternate;
+}
+.hero-glow-1 { background: var(--accent); top: -200px; left: -100px; }
+.hero-glow-2 { background: var(--sunshine); bottom: -200px; right: -100px; animation-delay: -3s; }
+
+@keyframes glowPulse {
+  0% { transform: scale(1); opacity: 0.2; }
+  100% { transform: scale(1.15); opacity: 0.35; }
+}
+
+.floating-bags-container {
+  position: absolute; inset: 0;
+  overflow: hidden; pointer-events: none; z-index: 1;
+}
+
+.floating-bag {
+  position: absolute;
+  border-radius: 10px 10px 6px 6px;
+  opacity: 0;
+  animation: bagFloat var(--dur, 10s) ease-in-out infinite, bagFadeIn 1.5s ease forwards;
+  animation-delay: var(--delay, 0s);
+  transition: transform 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.floating-bag::before {
+  content: ''; position: absolute;
+  top: -10px; left: 50%; transform: translateX(-50%);
+  width: 24px; height: 12px;
+  border-radius: 12px 12px 0 0;
+  background: inherit; opacity: 0.6;
+}
+.floating-bag::after {
+  content: ''; position: absolute; inset: 3px;
+  border-radius: 8px 8px 4px 4px;
+  border: 2px solid rgba(255,255,255,0.3);
+  pointer-events: none;
+}
+
+@keyframes bagFloat {
+  0%, 100% { transform: translate(0, 0) rotate(var(--r1, -5deg)); }
+  25% { transform: translate(var(--dx, 10px), -20px) rotate(var(--r2, 4deg)); }
+  50% { transform: translate(calc(var(--dx, 10px) * -0.5), -10px) rotate(var(--r3, -3deg)); }
+  75% { transform: translate(calc(var(--dx, 10px) * 0.3), -25px) rotate(var(--r1, -5deg)); }
+}
+@keyframes bagFadeIn {
+  to { opacity: var(--target-opacity, 0.25); }
+}
+
+.hero-content { position: relative; z-index: 2; max-width: 680px; }
+
+.hero-logo {
+  font-family: var(--font-heading); font-weight: 800;
+  font-size: clamp(4rem, 12vw, 8.5rem);
+  letter-spacing: -0.04em;
+  margin-bottom: 12px;
+  color: var(--sunshine);
+  text-shadow: 5px 5px 0 var(--accent), 10px 10px 0 rgba(26,21,48,0.25);
+  animation: logoWobble 5s ease-in-out infinite;
+}
+@keyframes logoWobble {
+  0%, 100% { transform: rotate(-1.5deg); }
+  50% { transform: rotate(1.5deg); }
+}
+
+.hero-slogan {
+  font-family: var(--font-heading); font-weight: 800;
+  font-size: clamp(1.4rem, 4vw, 2.4rem);
+  color: #fff;
+  text-transform: uppercase; letter-spacing: -0.01em;
+  margin-bottom: 16px;
+  opacity: 0; animation: heroFadeUp 0.8s ease forwards 0.3s;
+}
+.hero-subtext {
+  font-size: 1.15rem; color: rgba(255,255,255,0.9); font-weight: 500;
+  margin-bottom: 40px; max-width: 520px; margin-inline: auto;
+  opacity: 0; animation: heroFadeUp 0.8s ease forwards 0.5s;
+}
+@keyframes heroFadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-heading); font-weight: 800;
+  font-size: 1.15rem; padding: 18px 42px;
+  border-radius: 60px; cursor: pointer;
+  text-transform: uppercase; letter-spacing: 0.02em;
+  border: 3px solid var(--text);
+  transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+  position: relative; overflow: hidden;
+}
+.btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%);
+  transform: translateX(-100%);
+  transition: transform 0.5s;
+}
+.btn:hover::after { transform: translateX(100%); }
+.btn:hover { transform: translate(-2px,-2px); box-shadow: 8px 8px 0 var(--text); }
+.btn:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--text); }
+
+.btn-primary {
+  background: var(--sunshine);
+  color: var(--text);
+  box-shadow: 5px 5px 0 var(--text);
+  opacity: 0; animation: heroFadeUp 0.8s ease forwards 0.7s;
+}
+
+.btn-arrow { transition: transform 0.3s; }
+.btn:hover .btn-arrow { transform: translateX(4px); }
+
+/* ===== MARQUEE ===== */
+.marquee {
+  overflow: hidden;
+  background: var(--accent);
+  padding: 16px 0;
+  white-space: nowrap;
+  border-top: 3px solid var(--text);
+  border-bottom: 3px solid var(--text);
+}
+.marquee-track {
+  display: inline-flex; gap: 48px;
+  animation: marquee 25s linear infinite;
+}
+.marquee-track span {
+  font-family: var(--font-heading); font-weight: 800;
+  font-size: 1rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: #fff;
+}
+.marquee-track .dot { color: var(--sunshine); }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+/* ===== SECTIONS ===== */
+section { padding: 100px 0; }
+.section-label {
+  display: inline-block;
+  font-family: var(--font-heading); font-weight: 800;
+  font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text); margin-bottom: 14px;
+  padding: 8px 18px; border-radius: 50px;
+  background: var(--sunshine);
+  border: 2.5px solid var(--text);
+  box-shadow: 3px 3px 0 var(--text);
+}
+.section-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  margin-bottom: 16px;
+}
+.section-subtitle {
+  color: var(--text-light); font-size: 1.1rem;
+  max-width: 540px; margin-bottom: 56px;
+}
+.text-center { text-align: center; }
+.text-center .section-subtitle { margin-inline: auto; }
+
+/* ===== REVEAL ===== */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+}
+.reveal.from-left { transform: translateX(-40px) translateY(0); }
+.reveal.from-right { transform: translateX(40px) translateY(0); }
+.reveal.from-scale { transform: scale(0.92); }
+.reveal.visible { opacity: 1; transform: none; }
+
+/* ===== FEATURES ===== */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+@media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .features-grid { grid-template-columns: 1fr; } }
+
+.feature-card {
+  background: var(--card-bg);
+  border: 3px solid var(--text);
+  border-radius: var(--radius);
+  padding: 32px 24px 28px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s;
+  position: relative; overflow: hidden;
+}
+.feature-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 8px;
+  background: var(--stripe, var(--accent));
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+.feature-card:hover::before { transform: scaleX(1); }
+.feature-card:hover {
+  transform: translate(-3px,-3px);
+  box-shadow: 9px 9px 0 var(--text);
+}
+
+.feature-icon {
+  width: 70px; height: 70px;
+  margin: 0 auto 20px;
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem;
+  background: var(--icon-bg, #FFF0E8);
+  border: 3px solid var(--text);
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), border-radius 0.3s;
+}
+.feature-card:hover .feature-icon {
+  transform: scale(1.15) rotate(8deg);
+  border-radius: 50%;
+}
+
+.feature-card h3 { font-size: 1.05rem; margin-bottom: 8px; }
+.feature-card p { font-size: 0.9rem; color: var(--text-light); line-height: 1.5; }
+
+/* ===== COMPARISON ===== */
+.comparison-section {
+  background: var(--mint);
+}
+
+.comparison-table {
+  max-width: 740px; margin: 0 auto;
+  border-radius: var(--radius); overflow: hidden;
+  background: var(--card-bg);
+  border: 3px solid var(--text);
+  box-shadow: var(--shadow-lg);
+}
+
+.comparison-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  transition: background 0.2s;
+}
+.comparison-row:not(.header):hover { background: #FEFBF7; }
+.comparison-row + .comparison-row { border-top: 1px solid var(--card-border); }
+
+.comparison-row.header {
+  font-family: var(--font-heading); font-weight: 800; font-size: 1rem;
+  text-transform: uppercase; letter-spacing: 0.02em;
+  background: var(--text); color: #fff;
+}
+.comparison-row.header .cell.pupkeep-h {
+  background: var(--accent); color: #fff;
+}
+
+.cell {
+  padding: 16px 20px; font-size: 0.92rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.cell.label { font-weight: 600; background: #FAFAF7; color: var(--text); }
+.cell.pupkeep { color: var(--text); font-weight: 500; }
+.cell.ordinary { color: var(--text-light); }
+
+.cell-icon {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+}
+.cell-icon.check { background: #E8F5E9; color: #2E7D32; }
+.cell-icon.cross { background: #FBE9E7; color: #C62828; }
+
+/* ===== LINEUP ===== */
+.lineup-section {
+  background: var(--sunshine);
+}
+
+.lineup-group-label {
+  font-family: var(--font-heading); font-weight: 800;
+  font-size: 0.9rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text); margin-bottom: 24px;
+  display: flex; align-items: center; gap: 16px;
+}
+.lineup-group-label::after {
+  content: ''; flex: 1; height: 3px; background: var(--text); border-radius: 3px;
+}
+
+.lineup-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px; margin-bottom: 56px;
+}
+@media (max-width: 800px) { .lineup-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 500px) { .lineup-grid { grid-template-columns: 1fr; } }
+
+.product-card {
+  background: var(--card-bg);
+  border: 3px solid var(--text);
+  border-radius: var(--radius);
+  cursor: pointer; overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), border-color 0.2s, box-shadow 0.2s;
+  position: relative; user-select: none;
+  transform-style: preserve-3d;
+  perspective: 800px;
+}
+.product-card:hover {
+  transform: translate(-3px,-3px);
+  box-shadow: 9px 9px 0 var(--text);
+}
+.product-card.selected {
+  border-color: var(--accent);
+  box-shadow: 6px 6px 0 var(--accent);
+}
+.product-card.selected .select-indicator { background: var(--accent); border-color: var(--accent); color: #fff; transform: scale(1); }
+.product-card.selected .select-indicator svg { stroke-dashoffset: 0; }
+
+.stripe-preview {
+  height: 100px; position: relative; overflow: hidden;
+  transition: height 0.3s;
+}
+.stripe-preview .stripe-inner {
+  position: absolute; inset: -20px;
+  background: var(--stripe-bg);
+  animation: stripeDrift 12s linear infinite;
+  transition: transform 0.4s;
+}
+.product-card:hover .stripe-inner { transform: scale(1.08) rotate(1deg); }
+@keyframes stripeDrift { to { background-position: 200px 0; } }
+
+.stripe-preview .bag-icon {
+  position: absolute; bottom: -4px; left: 50%;
+  transform: translateX(-50%);
+  width: 50px; height: 60px;
+  background: var(--card-bg);
+  border-radius: 12px 12px 6px 6px;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.product-card:hover .bag-icon { transform: translateX(-50%) translateY(-6px) rotate(-3deg); }
+.bag-icon-stripe {
+  width: 30px; height: 36px; border-radius: 6px 6px 3px 3px;
+  background: var(--stripe-bg);
+}
+
+.select-indicator {
+  position: absolute; top: 14px; right: 14px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: #fff; border: 2px solid #ddd;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  transform: scale(0.9);
+  z-index: 2;
+}
+.select-indicator svg {
+  width: 16px; height: 16px;
+  stroke: #fff; stroke-width: 3; fill: none;
+  stroke-dasharray: 20; stroke-dashoffset: 20;
+  transition: stroke-dashoffset 0.3s ease 0.1s;
+}
+
+.card-body { padding: 24px 20px 20px; }
+.card-body h3 { font-size: 1.1rem; margin-bottom: 6px; }
+.card-body .card-desc { font-size: 0.9rem; color: var(--text-light); margin-bottom: 8px; }
+.card-body .card-printed {
+  font-family: var(--font-heading); font-weight: 700;
+  font-size: 0.95rem; color: var(--text);
+  padding: 6px 14px; border-radius: 8px;
+  background: rgba(0,0,0,0.04); display: inline-block;
+}
+
+/* ===== MY LIST BAR ===== */
+.my-list-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--sunshine);
+  border-top: 3px solid var(--text);
+  box-shadow: 0 -6px 0 rgba(26,21,48,0.1);
+  z-index: 100;
+  transform: translateY(100%);
+  transition: transform 0.45s cubic-bezier(0.16,1,0.3,1);
+  padding: 14px 24px;
+}
+.my-list-bar.visible { transform: translateY(0); }
+
+.my-list-inner {
+  max-width: 1120px; margin: 0 auto;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.my-list-label {
+  font-family: var(--font-heading); font-weight: 700;
+  font-size: 0.85rem; white-space: nowrap;
+}
+.my-list-chips { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 16px; border-radius: 50px;
+  font-size: 0.82rem; font-weight: 700; color: #fff;
+  border: 2px solid var(--text);
+  animation: chipPop 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes chipPop { from { transform: scale(0) rotate(-10deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+
+.chip .chip-remove {
+  background: none; border: none; color: #fff;
+  font-size: 1.1rem; cursor: pointer; padding: 0 0 0 2px;
+  line-height: 1; opacity: 0.7; transition: opacity 0.2s, transform 0.2s;
+}
+.chip .chip-remove:hover { opacity: 1; transform: scale(1.2); }
+
+.my-list-cta {
+  font-family: var(--font-heading); font-weight: 800;
+  font-size: 0.9rem; padding: 12px 28px;
+  border-radius: 50px; border: 2.5px solid var(--text);
+  text-transform: uppercase;
+  background: var(--accent); color: #fff; cursor: pointer;
+  box-shadow: 3px 3px 0 var(--text);
+  transition: transform 0.15s, box-shadow 0.15s; white-space: nowrap;
+}
+.my-list-cta:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--text); }
+
+/* ===== SIGNUP ===== */
+.signup-section {
+  background: var(--grape);
+}
+.signup-section .section-title, .signup-section .section-subtitle { color: #fff; }
+
+.signup-card {
+  max-width: 540px; margin: 0 auto;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 48px 36px;
+  box-shadow: var(--shadow-lg);
+  border: 3px solid var(--text);
+}
+
+.form-group { margin-bottom: 22px; }
+.form-group label {
+  display: block; font-family: var(--font-heading);
+  font-weight: 600; font-size: 0.9rem; margin-bottom: 8px;
+}
+.form-group input, .form-group textarea {
+  width: 100%; padding: 14px 18px;
+  border: 2.5px solid var(--text);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body); font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: var(--bg);
+}
+.form-group input:focus, .form-group textarea:focus {
+  border-color: var(--accent); outline: none;
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+.form-group textarea { resize: vertical; min-height: 70px; }
+
+.selected-products-summary {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 24px; min-height: 36px;
+}
+.selected-products-summary .chip { background: var(--text); font-size: 0.8rem; }
+
+.form-error {
+  background: #FFF3E0; color: #E65100;
+  padding: 12px 18px; border-radius: var(--radius-sm);
+  font-size: 0.9rem; font-weight: 500;
+  margin-bottom: 18px; display: none;
+  border: 1px solid #FFE0B2;
+}
+.form-error.show { display: flex; align-items: center; gap: 8px; }
+
+.btn-submit {
+  width: 100%; font-size: 1.1rem; padding: 18px;
+  justify-content: center;
+}
+
+.form-success { text-align: center; padding: 40px 20px; }
+.form-success .success-icon {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: var(--success-bg); margin: 0 auto 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.2rem;
+  animation: successBounce 0.6s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes successBounce { from { transform: scale(0); } to { transform: scale(1); } }
+
+.form-success h3 { font-size: 1.6rem; margin-bottom: 8px; color: var(--success-text); }
+.form-success p { color: var(--text-light); font-size: 1.05rem; }
+.form-success .success-products {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  justify-content: center; margin-top: 20px;
+}
+.form-success .success-products .chip { background: var(--success-text); }
+
+/* ===== CONFETTI ===== */
+.confetti-canvas {
+  position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  text-align: center; padding: 72px 24px 40px;
+  background: var(--text); color: #fff; position: relative;
+}
+.footer-logo {
+  font-family: var(--font-heading); font-weight: 800;
+  font-size: 2rem; margin-bottom: 8px;
+}
+.footer-logo span {
+  background: linear-gradient(135deg, var(--accent), #F7C856);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.footer-tagline { color: rgba(255,255,255,0.5); font-size: 1rem; margin-bottom: 28px; }
+.footer-links { display: flex; gap: 28px; justify-content: center; margin-bottom: 36px; }
+.footer-links a {
+  color: rgba(255,255,255,0.45); font-size: 0.9rem;
+  transition: color 0.2s; font-weight: 500;
+}
+.footer-links a:hover { color: #fff; }
+.footer-note { font-size: 0.8rem; color: rgba(255,255,255,0.25); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  section { padding: 72px 0; }
+  .comparison-row { grid-template-columns: 1fr; }
+  .comparison-row.header .cell:first-child { display: none; }
+  .cell { padding: 10px 18px; }
+  .cell.label {
+    font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-light);
+    padding-bottom: 2px; background: transparent;
+  }
+  .comparison-row:not(.header) { padding: 4px 0 8px; border-top: 1px solid var(--card-border); }
+  .signup-card { padding: 32px 20px; }
+  .my-list-inner { justify-content: center; }
+  .hero-glow { width: 300px; height: 300px; }
+}
+
+/* ===== 3D TILT ===== */
+.tilt-card { transition: transform 0.1s ease-out; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-glow hero-glow-1" aria-hidden="true"></div>
+  <div class="hero-glow hero-glow-2" aria-hidden="true"></div>
+  <div class="floating-bags-container" id="heroBags" aria-hidden="true"></div>
+  <div class="hero-content">
+    <h1 class="hero-logo">Pupkeep</h1>
+    <p class="hero-slogan">Make the dirty work delightful.</p>
+    <p class="hero-subtext">Thicker bags. Fresh scents. Built-in tie handles. The best little upgrade to your daily walk.</p>
+    <a href="#lineup" class="btn btn-primary">
+      Join the waitlist <span class="btn-arrow" aria-hidden="true">→</span>
+    </a>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track" id="marqueeTrack"></div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container text-center">
+    <div class="reveal"><span class="section-label">Why Pupkeep</span></div>
+    <h2 class="section-title reveal">Four small things.<br>One big difference.</h2>
+    <p class="section-subtitle reveal">We obsessed over the details so you don't have to think about them.</p>
+    <div class="features-grid">
+      <div class="feature-card reveal tilt-card" style="transition-delay:0.05s;--stripe:var(--accent)">
+        <div class="feature-icon" style="--icon-bg:#FFD5DE" aria-hidden="true">🛡️</div>
+        <h3>Thick &amp; rip-proof</h3>
+        <p>Premium film that won't let you down. Not now, not ever.</p>
+      </div>
+      <div class="feature-card reveal tilt-card" style="transition-delay:0.1s;--stripe:var(--grape)">
+        <div class="feature-icon" style="--icon-bg:#E4D5FF" aria-hidden="true">🎀</div>
+        <h3>Built-in tie handles</h3>
+        <p>Seal, tie, carry. One smooth motion, hands free.</p>
+      </div>
+      <div class="feature-card reveal tilt-card" style="transition-delay:0.15s;--stripe:var(--mint)">
+        <div class="feature-icon" style="--icon-bg:#C2FFF1" aria-hidden="true">🌿</div>
+        <h3>Fresh, light scents</h3>
+        <p>A hint of something nice — for you, on the bag, IFRA-compliant.</p>
+      </div>
+      <div class="feature-card reveal tilt-card" style="transition-delay:0.2s;--stripe:var(--electric)">
+        <div class="feature-icon" style="--icon-bg:#FFF0B8" aria-hidden="true">👋</div>
+        <h3>One-hand opening</h3>
+        <p>Peel &amp; go. No rubbing, no static-cling struggle.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="stripe-divider"></div>
+
+<!-- COMPARISON -->
+<section class="comparison-section" id="compare">
+  <div class="container text-center">
+    <div class="reveal"><span class="section-label">The difference</span></div>
+    <h2 class="section-title reveal">Not all bags are equal.</h2>
+    <p class="section-subtitle reveal">A side-by-side look at what you've been settling for.</p>
+    <div class="comparison-table reveal from-scale">
+      <div class="comparison-row header">
+        <div class="cell"></div>
+        <div class="cell pupkeep-h">Pupkeep</div>
+        <div class="cell">Ordinary bags</div>
+      </div>
+      <div class="comparison-row">
+        <div class="cell label">Thickness</div>
+        <div class="cell pupkeep"><span class="cell-icon check" aria-hidden="true">✓</span>Thick, leak-resistant film</div>
+        <div class="cell ordinary"><span class="cell-icon cross" aria-hidden="true">✗</span>Thin, tears easily</div>
+      </div>
+      <div class="comparison-row">
+        <div class="cell label">Scent</div>
+        <div class="cell pupkeep"><span class="cell-icon check" aria-hidden="true">✓</span>Fresh, light scents</div>
+        <div class="cell ordinary"><span class="cell-icon cross" aria-hidden="true">✗</span>Stale or none</div>
+      </div>
+      <div class="comparison-row">
+        <div class="cell label">Handles</div>
+        <div class="cell pupkeep"><span class="cell-icon check" aria-hidden="true">✓</span>Built-in tie handles</div>
+        <div class="cell ordinary"><span class="cell-icon cross" aria-hidden="true">✗</span>No handles</div>
+      </div>
+      <div class="comparison-row">
+        <div class="cell label">Opening</div>
+        <div class="cell pupkeep"><span class="cell-icon check" aria-hidden="true">✓</span>Easy one-hand open</div>
+        <div class="cell ordinary"><span class="cell-icon cross" aria-hidden="true">✗</span>Static-cling struggle</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="stripe-divider"></div>
+
+<!-- LINEUP -->
+<section class="lineup-section" id="lineup">
+  <div class="container">
+    <div class="text-center">
+      <div class="reveal"><span class="section-label">The lineup</span></div>
+      <h2 class="section-title reveal">Pick your favorites.</h2>
+      <p class="section-subtitle reveal">We're testing six products. Tap the ones you love — we'll let you know the moment they're ready.</p>
+    </div>
+
+    <div class="lineup-group-label reveal">Scents</div>
+    <div class="lineup-grid" id="scentsGrid"></div>
+
+    <div class="lineup-group-label reveal">Printed designs</div>
+    <div class="lineup-grid" id="printsGrid"></div>
+  </div>
+</section>
+
+<!-- SIGNUP -->
+<section class="signup-section" id="signup">
+  <div class="container text-center">
+    <div class="reveal"><span class="section-label">Almost there</span></div>
+    <h2 class="section-title reveal">Join the waitlist.</h2>
+    <p class="section-subtitle reveal">Pick your bags above, drop your email, and you're in.</p>
+
+    <div class="signup-card reveal from-scale" id="signupCard">
+      <div id="signupForm">
+        <label class="form-group" style="font-family:var(--font-heading);font-weight:600;font-size:0.9rem;margin-bottom:14px;display:block;">Your picks:</label>
+        <div class="selected-products-summary" id="formProductsSummary" aria-live="polite"></div>
+
+        <div class="form-error" id="formError" role="alert"><span>⚠</span><span id="formErrorText"></span></div>
+
+        <div class="form-group">
+          <label for="emailInput">Email <span aria-hidden="true">*</span></label>
+          <input type="email" id="emailInput" required placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="nameInput">First name <span style="font-weight:400;color:var(--text-light)">(optional)</span></label>
+          <input type="text" id="nameInput" placeholder="Your first name" autocomplete="given-name">
+        </div>
+        <div class="form-group">
+          <label for="noteInput">Anything you wish your current bags did? <span style="font-weight:400;color:var(--text-light)">(optional)</span></label>
+          <textarea id="noteInput" rows="2" placeholder="e.g. Better scent, bigger size, compostable..."></textarea>
+        </div>
+        <button type="button" class="btn btn-primary btn-submit" id="submitBtn" style="opacity:1;animation:none;">
+          I'm in <span aria-hidden="true">🐾</span>
+        </button>
+      </div>
+
+      <div class="form-success" id="formSuccess" style="display:none">
+        <div class="success-icon" aria-hidden="true">🐾</div>
+        <h3>You're on the list!</h3>
+        <p>We'll let you know the moment these are ready:</p>
+        <div class="success-products" id="successProducts"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="stripe-divider" style="position:absolute;top:0;left:0;right:0"></div>
+  <div class="footer-logo">Pup<span>keep</span></div>
+  <p class="footer-tagline">A little joy for the not-so-glamorous job.</p>
+  <div class="footer-links">
+    <a href="#" aria-label="Instagram">Instagram</a>
+    <a href="#" aria-label="TikTok">TikTok</a>
+    <a href="#" aria-label="Email us">Contact</a>
+  </div>
+  <p class="footer-note">&copy; 2026 Pupkeep. Made with care (and a lot of walks).</p>
+</footer>
+
+<!-- MY LIST BAR -->
+<div class="my-list-bar" id="myListBar" aria-live="polite">
+  <div class="my-list-inner">
+    <span class="my-list-label">My list:</span>
+    <div class="my-list-chips" id="myListChips"></div>
+    <button class="my-list-cta" id="myListCta">Sign up →</button>
+  </div>
+</div>
+
+<!-- CONFETTI CANVAS -->
+<canvas class="confetti-canvas" id="confettiCanvas"></canvas>
+
+<script>
+// ===== PRODUCT CONFIG =====
+const PRODUCTS = [
+  { name: "Lavender",       type: "scent", stripeColors: ["#9B8FD4", "#7CBFA4"], description: "Calm, soft, soothing." },
+  { name: "Lemon",          type: "scent", stripeColors: ["#4A90D9", "#F7C856"], description: "Bright and fresh — kept light." },
+  { name: "Fragrance-Free", type: "scent", stripeColors: ["#B8B3AA", "#F0EBE4"], description: "For sensitive pups — no added scent." },
+  { name: "Doodie Calls",       type: "print", stripeColors: ["#E8734A", "#FFF0E0"], printedText: "Doodie Calls",       description: "When duty calls, you answer." },
+  { name: "Pick of the Litter", type: "print", stripeColors: ["#4BBFAD", "#E8DCC8"], printedText: "Pick of the Litter", description: "The bag your walk deserves." },
+  { name: "Business Time",      type: "print", stripeColors: ["#2C3E6B", "#D4A843"], printedText: "Business Time",      description: "Strictly professional." },
+];
+
+const selectedProducts = new Set();
+
+function stripeCSS(colors, size = 20) {
+  return `repeating-linear-gradient(135deg, ${colors[0]} 0, ${colors[0]} ${size}px, ${colors[1]} ${size}px, ${colors[1]} ${size * 2}px)`;
+}
+
+// ===== MARQUEE =====
+(function initMarquee() {
+  const items = ["Thick & Rip-Proof", "Built-In Handles", "Fresh Scents", "One-Hand Opening", "Elevate the Everyday", "Premium Feel"];
+  const track = document.getElementById("marqueeTrack");
+  const html = items.map(t => `<span>${t}</span><span class="dot">●</span>`).join("");
+  track.innerHTML = html + html;
+})();
+
+// ===== FLOATING BAGS =====
+function createFloatingBags(containerId, count = 12) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  for (let i = 0; i < count; i++) {
+    const p = PRODUCTS[i % PRODUCTS.length];
+    const bag = document.createElement("div");
+    bag.className = "floating-bag";
+    const size = 45 + Math.random() * 35;
+    Object.assign(bag.style, {
+      background: stripeCSS(p.stripeColors, 8),
+      left: `${5 + Math.random() * 85}%`,
+      top: `${5 + Math.random() * 80}%`,
+      width: `${size}px`,
+      height: `${size * 1.25}px`,
+    });
+    bag.style.setProperty("--dur", `${8 + Math.random() * 8}s`);
+    bag.style.setProperty("--delay", `${Math.random() * -12}s`);
+    bag.style.setProperty("--r1", `${-10 + Math.random() * 20}deg`);
+    bag.style.setProperty("--r2", `${-6 + Math.random() * 12}deg`);
+    bag.style.setProperty("--r3", `${-8 + Math.random() * 16}deg`);
+    bag.style.setProperty("--dx", `${-15 + Math.random() * 30}px`);
+    bag.style.setProperty("--target-opacity", `${0.12 + Math.random() * 0.18}`);
+    container.appendChild(bag);
+  }
+}
+
+// ===== MOUSE PARALLAX ON HERO =====
+(function initParallax() {
+  const hero = document.querySelector(".hero");
+  const bags = () => document.querySelectorAll("#heroBags .floating-bag");
+  let mx = 0, my = 0, cx = 0, cy = 0;
+  hero.addEventListener("mousemove", e => {
+    const r = hero.getBoundingClientRect();
+    mx = (e.clientX - r.left) / r.width - 0.5;
+    my = (e.clientY - r.top) / r.height - 0.5;
+  });
+  function tick() {
+    cx += (mx - cx) * 0.05;
+    cy += (my - cy) * 0.05;
+    bags().forEach((b, i) => {
+      const depth = 0.5 + (i % 4) * 0.4;
+      b.style.marginLeft = `${cx * depth * 30}px`;
+      b.style.marginTop = `${cy * depth * 20}px`;
+    });
+    requestAnimationFrame(tick);
+  }
+  if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) tick();
+})();
+
+// ===== RENDER PRODUCT CARDS =====
+function renderCards() {
+  PRODUCTS.forEach((p, i) => {
+    const card = document.createElement("div");
+    card.className = "product-card reveal tilt-card";
+    card.style.transitionDelay = `${(i % 3) * 0.08}s`;
+    card.setAttribute("role", "checkbox");
+    card.setAttribute("aria-checked", "false");
+    card.setAttribute("aria-label", `Select ${p.name}`);
+    card.setAttribute("tabindex", "0");
+    card.dataset.product = p.name;
+
+    card.innerHTML = `
+      <div class="stripe-preview" style="--stripe-bg:${stripeCSS(p.stripeColors, 16)}">
+        <div class="stripe-inner" style="background:${stripeCSS(p.stripeColors, 16)}"></div>
+        <div class="bag-icon"><div class="bag-icon-stripe" style="background:${stripeCSS(p.stripeColors, 6)}"></div></div>
+      </div>
+      <div class="select-indicator">
+        <svg viewBox="0 0 16 16"><polyline points="3,8 7,12 13,4"/></svg>
+      </div>
+      <div class="card-body">
+        <h3>${p.name}</h3>
+        <p class="card-desc">${p.description}</p>
+        ${p.printedText ? `<span class="card-printed">"${p.printedText}"</span>` : ""}
+      </div>
+    `;
+
+    card.addEventListener("click", () => toggleProduct(p.name, card));
+    card.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleProduct(p.name, card); }
+    });
+
+    document.getElementById(p.type === "scent" ? "scentsGrid" : "printsGrid").appendChild(card);
+  });
+}
+
+function toggleProduct(name, card) {
+  if (selectedProducts.has(name)) {
+    selectedProducts.delete(name);
+    card.classList.remove("selected");
+    card.setAttribute("aria-checked", "false");
+  } else {
+    selectedProducts.add(name);
+    card.classList.add("selected");
+    card.setAttribute("aria-checked", "true");
+    card.style.transform = "scale(0.95)";
+    requestAnimationFrame(() => requestAnimationFrame(() => card.style.transform = ""));
+  }
+  updateUI();
+}
+
+function updateUI() {
+  const bar = document.getElementById("myListBar");
+  const chips = document.getElementById("myListChips");
+  const formSummary = document.getElementById("formProductsSummary");
+  chips.innerHTML = "";
+  formSummary.innerHTML = "";
+
+  if (selectedProducts.size > 0) {
+    bar.classList.add("visible");
+    selectedProducts.forEach(name => {
+      const p = PRODUCTS.find(x => x.name === name);
+      chips.insertAdjacentHTML("beforeend",
+        `<span class="chip" style="background:${p.stripeColors[0]}">${name}<button class="chip-remove" aria-label="Remove ${name}" data-name="${name}">&times;</button></span>`);
+      formSummary.insertAdjacentHTML("beforeend",
+        `<span class="chip" style="background:${p.stripeColors[0]}">${name}</span>`);
+    });
+    chips.querySelectorAll(".chip-remove").forEach(btn => {
+      btn.addEventListener("click", e => {
+        e.stopPropagation();
+        const n = btn.dataset.name;
+        selectedProducts.delete(n);
+        const c = document.querySelector(`.product-card[data-product="${n}"]`);
+        if (c) { c.classList.remove("selected"); c.setAttribute("aria-checked", "false"); }
+        updateUI();
+      });
+    });
+  } else {
+    bar.classList.remove("visible");
+    formSummary.innerHTML = '<span style="color:var(--text-light);font-size:0.9rem">Tap a bag above to add it to your list.</span>';
+  }
+}
+
+// ===== 3D TILT =====
+(function initTilt() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  document.addEventListener("mousemove", e => {
+    document.querySelectorAll(".tilt-card:hover").forEach(card => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      card.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateY(-6px)`;
+    });
+  });
+  document.addEventListener("mouseleave", e => {
+    if (e.target.classList?.contains("tilt-card")) e.target.style.transform = "";
+  }, true);
+  document.querySelectorAll(".tilt-card").forEach(card => {
+    card.addEventListener("mouseleave", () => { card.style.transform = ""; });
+  });
+})();
+
+// ===== CONFETTI =====
+function launchConfetti() {
+  const canvas = document.getElementById("confettiCanvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const colors = PRODUCTS.flatMap(p => p.stripeColors);
+  const pieces = Array.from({ length: 120 }, () => ({
+    x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+    y: canvas.height / 2,
+    vx: (Math.random() - 0.5) * 18,
+    vy: -8 - Math.random() * 14,
+    size: 6 + Math.random() * 6,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    rot: Math.random() * Math.PI * 2,
+    vr: (Math.random() - 0.5) * 0.3,
+    gravity: 0.25 + Math.random() * 0.15,
+    life: 1,
+  }));
+
+  let frame;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.vy += p.gravity;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.vx *= 0.99;
+      p.life -= 0.008;
+      if (p.life <= 0) return;
+      alive = true;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+      ctx.restore();
+    });
+    if (alive) frame = requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  draw();
+}
+
+// ===== FORM =====
+document.getElementById("submitBtn").addEventListener("click", () => {
+  const errorEl = document.getElementById("formError");
+  const errorText = document.getElementById("formErrorText");
+  const email = document.getElementById("emailInput").value.trim();
+  const name = document.getElementById("nameInput").value.trim();
+  const note = document.getElementById("noteInput").value.trim();
+  errorEl.classList.remove("show");
+
+  if (selectedProducts.size === 0) {
+    errorText.textContent = "Pick at least one bag first — scroll up and tap your favorites!";
+    errorEl.classList.add("show");
+    return;
+  }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errorText.textContent = "Please enter a valid email address.";
+    errorEl.classList.add("show");
+    return;
+  }
+
+  const payload = { email, name: name || null, products: Array.from(selectedProducts), note: note || null };
+
+  // TODO: connect to email/CRM — POST to your endpoint
+  console.log("Waitlist signup:", payload);
+
+  document.getElementById("signupForm").style.display = "none";
+  document.getElementById("formSuccess").style.display = "block";
+  document.getElementById("successProducts").innerHTML = payload.products
+    .map(n => { const p = PRODUCTS.find(x => x.name === n); return `<span class="chip" style="background:${p.stripeColors[0]}">${n}</span>`; })
+    .join("");
+  document.getElementById("myListBar").classList.remove("visible");
+  launchConfetti();
+});
+
+document.getElementById("myListCta").addEventListener("click", () => {
+  document.getElementById("signup").scrollIntoView({ behavior: "smooth" });
+});
+
+// ===== SCROLL REVEAL =====
+function initReveal() {
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add("visible"); observer.unobserve(e.target); }
+    });
+  }, { threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
+  document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+}
+
+// ===== INIT =====
+renderCards();
+createFloatingBags("heroBags", 14);
+updateUI();
+initReveal();
+</script>
+</body>
+</html>
