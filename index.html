@@ -20,9 +20,10 @@
   --accent-hover: #E63957;
   --accent-glow: rgba(255,77,109,0.4);
   --electric: #2D5BFF;        /* electric blue */
-  --sunshine: #FFD028;        /* vivid yellow */
+  --sunshine: #93B26B;        /* sage green (from product photos) */
   --mint: #00C9A7;            /* bright teal */
-  --grape: #7B3FE4;           /* punchy purple */
+  --grape: #B49BDD;           /* lavender purple (from product photos) */
+  --cream: #EDE4D3;           /* label band cream */
   --card-bg: #FFFFFF;
   --card-border: #1A1530;     /* bold dark outlines */
   --success-bg: #D4FFF4;
@@ -408,33 +409,41 @@ section { padding: 100px 0; }
 .product-card.selected .select-indicator { background: var(--accent); border-color: var(--accent); color: #fff; transform: scale(1); }
 .product-card.selected .select-indicator svg { stroke-dashoffset: 0; }
 
-.stripe-preview {
-  height: 100px; position: relative; overflow: hidden;
-  transition: height 0.3s;
-}
-.stripe-preview .stripe-inner {
-  position: absolute; inset: -20px;
-  background: var(--stripe-bg);
-  animation: stripeDrift 12s linear infinite;
-  transition: transform 0.4s;
-}
-.product-card:hover .stripe-inner { transform: scale(1.08) rotate(1deg); }
-@keyframes stripeDrift { to { background-position: 200px 0; } }
-
-.stripe-preview .bag-icon {
-  position: absolute; bottom: -4px; left: 50%;
-  transform: translateX(-50%);
-  width: 50px; height: 60px;
-  background: var(--card-bg);
-  border-radius: 12px 12px 6px 6px;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+/* Product stage: roll by default, flips to bag on hover */
+.product-stage {
+  height: 210px; position: relative; overflow: hidden;
+  background: radial-gradient(circle at 50% 38%, #fafafa 0%, #ECEAEE 100%);
   display: flex; align-items: center; justify-content: center;
-  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  border-bottom: 3px solid var(--text);
 }
-.product-card:hover .bag-icon { transform: translateX(-50%) translateY(-6px) rotate(-3deg); }
-.bag-icon-stripe {
-  width: 30px; height: 36px; border-radius: 6px 6px 3px 3px;
-  background: var(--stripe-bg);
+.product-stage .prod {
+  position: absolute; width: 64%; height: 92%;
+  filter: drop-shadow(0 10px 12px rgba(0,0,0,0.16));
+  transition: opacity 0.45s ease, transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  animation: prodBob 4s ease-in-out infinite;
+}
+.product-stage .roll { opacity: 1; transform: translateY(0) rotate(0); }
+.product-stage .bag  { opacity: 0; transform: translateY(12px) scale(0.88) rotate(-5deg); }
+.product-card:hover .roll, .product-card:focus-within .roll {
+  opacity: 0; transform: translateY(-10px) scale(0.9) rotate(5deg);
+}
+.product-card:hover .bag, .product-card:focus-within .bag {
+  opacity: 1; transform: translateY(0) scale(1) rotate(0);
+}
+@keyframes prodBob { 0%,100% { margin-top: 0; } 50% { margin-top: -8px; } }
+
+/* Hover hint pill */
+.stage-hint {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-heading); font-weight: 700; font-size: 0.68rem;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text); background: rgba(255,255,255,0.85);
+  padding: 4px 12px; border-radius: 50px; border: 2px solid var(--text);
+  transition: opacity 0.3s; z-index: 3;
+}
+.product-card:hover .stage-hint, .product-card:focus-within .stage-hint { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .product-stage .prod { animation: none; }
 }
 
 .select-indicator {
@@ -517,7 +526,7 @@ section { padding: 100px 0; }
 .signup-section {
   background: var(--grape);
 }
-.signup-section .section-title, .signup-section .section-subtitle { color: #fff; }
+.signup-section .section-title, .signup-section .section-subtitle { color: var(--text); }
 
 .signup-card {
   max-width: 540px; margin: 0 auto;
@@ -813,7 +822,7 @@ section { padding: 100px 0; }
 <script>
 // ===== PRODUCT CONFIG =====
 const PRODUCTS = [
-  { name: "Lavender",       type: "scent", stripeColors: ["#9B8FD4", "#7CBFA4"], description: "Calm, soft, soothing." },
+  { name: "Lavender",       type: "scent", stripeColors: ["#B49BDD", "#8FA86B"], description: "Calm, soft, soothing." },
   { name: "Lemon",          type: "scent", stripeColors: ["#4A90D9", "#F7C856"], description: "Bright and fresh — kept light." },
   { name: "Fragrance-Free", type: "scent", stripeColors: ["#B8B3AA", "#F0EBE4"], description: "For sensitive pups — no added scent." },
   { name: "Doodie Calls",       type: "print", stripeColors: ["#E8734A", "#FFF0E0"], printedText: "Doodie Calls",       description: "When duty calls, you answer." },
@@ -886,6 +895,40 @@ function createFloatingBags(containerId, count = 12) {
 })();
 
 // ===== RENDER PRODUCT CARDS =====
+// ===== PRODUCT SVG ART (roll + bag) — swap these for <img> tags to use real photos =====
+function stripePattern(id, c1, c2) {
+  return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="26" height="26" patternTransform="rotate(45)">
+    <rect width="26" height="26" fill="${c1}"></rect>
+    <rect width="13" height="26" fill="${c2}"></rect>
+  </pattern>`;
+}
+
+function rollSVG(idx, c1, c2) {
+  const pid = "roll" + idx;
+  return `<svg class="prod roll" viewBox="0 0 120 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pupkeep roll">
+    <defs>${stripePattern(pid, c1, c2)}</defs>
+    <ellipse cx="60" cy="152" rx="33" ry="8" fill="rgba(0,0,0,0.10)"></ellipse>
+    <rect x="26" y="28" width="68" height="122" rx="12" fill="url(#${pid})" stroke="rgba(0,0,0,0.08)" stroke-width="1"></rect>
+    <ellipse cx="60" cy="29" rx="34" ry="10" fill="${c2}" stroke="rgba(0,0,0,0.08)"></ellipse>
+    <ellipse cx="60" cy="29" rx="15" ry="4.5" fill="#cdcdcd"></ellipse>
+    <rect x="22" y="80" width="76" height="30" rx="6" fill="#EDE4D3" stroke="rgba(0,0,0,0.06)"></rect>
+    <text x="60" y="100" text-anchor="middle" font-family="DM Sans, sans-serif" font-weight="800" font-size="15" fill="#4A3F2A">Pupkeep</text>
+  </svg>`;
+}
+
+function bagSVG(idx, c1, c2) {
+  const pid = "bag" + idx;
+  return `<svg class="prod bag" viewBox="0 0 120 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pupkeep bag">
+    <defs>${stripePattern(pid, c1, c2)}</defs>
+    <ellipse cx="60" cy="158" rx="36" ry="7" fill="rgba(0,0,0,0.10)"></ellipse>
+    <path d="M40 56 C40 26 58 26 58 56" fill="none" stroke="url(#${pid})" stroke-width="9" stroke-linecap="round"></path>
+    <path d="M62 56 C62 26 80 26 80 56" fill="none" stroke="url(#${pid})" stroke-width="9" stroke-linecap="round"></path>
+    <path d="M26 54 L46 54 L48 62 L72 62 L74 54 L94 54 L88 150 Q60 159 32 150 Z" fill="url(#${pid})" stroke="rgba(0,0,0,0.08)" stroke-width="1"></path>
+    <rect x="30" y="98" width="60" height="26" rx="5" fill="#EDE4D3" stroke="rgba(0,0,0,0.06)"></rect>
+    <text x="60" y="116" text-anchor="middle" font-family="DM Sans, sans-serif" font-weight="800" font-size="13" fill="#4A3F2A">Pupkeep</text>
+  </svg>`;
+}
+
 function renderCards() {
   PRODUCTS.forEach((p, i) => {
     const card = document.createElement("div");
@@ -898,9 +941,10 @@ function renderCards() {
     card.dataset.product = p.name;
 
     card.innerHTML = `
-      <div class="stripe-preview" style="--stripe-bg:${stripeCSS(p.stripeColors, 16)}">
-        <div class="stripe-inner" style="background:${stripeCSS(p.stripeColors, 16)}"></div>
-        <div class="bag-icon"><div class="bag-icon-stripe" style="background:${stripeCSS(p.stripeColors, 6)}"></div></div>
+      <div class="product-stage">
+        ${rollSVG(i, p.stripeColors[0], p.stripeColors[1])}
+        ${bagSVG(i, p.stripeColors[0], p.stripeColors[1])}
+        <span class="stage-hint">Hover for the bag</span>
       </div>
       <div class="select-indicator">
         <svg viewBox="0 0 16 16"><polyline points="3,8 7,12 13,4"/></svg>
